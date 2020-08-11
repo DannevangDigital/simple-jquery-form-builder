@@ -8,8 +8,6 @@
 $(function(){
 
     //If loading a saved form from your database, put the ID here. Example id is "1".
-    var formID = '1';
-
     //Adds new field with animation
     $("#add-field a").click(function() {
         event.preventDefault();
@@ -42,82 +40,6 @@ $(function(){
         $(addChoice()).appendTo($(this).prev()).hide().slideDown('fast');
         $('.choices ul').sortable();
     });
-
-    //Saving form
-    $("#sjfb").submit(function(event) {
-        event.preventDefault();
-
-        //Loop through fields and save field data to array
-        var fields = [];
-
-        $('.field').each(function() {
-
-            var $this = $(this);
-
-            //field type
-            var fieldType = $this.data('type');
-
-            //field label
-            var fieldLabel = $this.find('.field-label').val();
-
-            //field required
-            var fieldReq = $this.hasClass('required') ? 1 : 0;
-
-            //check if this field has choices
-            if($this.find('.choices li').length >= 1) {
-
-                var choices = [];
-
-                $this.find('.choices li').each(function() {
-
-                    var $thisChoice = $(this);
-
-                    //choice label
-                    var choiceLabel = $thisChoice.find('.choice-label').val();
-
-                    //choice selected
-                    var choiceSel = $thisChoice.hasClass('selected') ? 1 : 0;
-
-                    choices.push({
-                        label: choiceLabel,
-                        sel: choiceSel
-                    });
-
-                });
-            }
-
-            fields.push({
-                type: fieldType,
-                label: fieldLabel,
-                req: fieldReq,
-                choices: choices
-            });
-
-        });
-
-        var frontEndFormHTML = '';
-
-        //Save form to database
-        //Demo doesn't actually save. Download project files for save
-        var data = JSON.stringify([{"name":"formID","value":formID},{"name":"formFields","value":fields}]);
-        $.ajax({
-            method: "POST",
-            url: "sjfb-save.php",
-            data: data,
-            dataType: 'json',
-            success: function (msg) {
-                console.log(msg);
-                $('.alert').removeClass('hide');
-                $("html, body").animate({ scrollTop: 0 }, "fast");
-
-                //Demo only
-                $('.alert textarea').val(JSON.stringify(fields));
-            }
-        });
-    });
-
-    //load saved form
-    loadForm(formID);
 
 });
 
@@ -231,46 +153,4 @@ function addChoice() {
         '</label>' +
         '<button type="button" class="delete">Delete Choice</button>' +
         '</li>'
-}
-
-//Loads a saved form from your database into the builder
-function loadForm(formID) {
-    $.getJSON('sjfb-load.php?form_id=' + formID, function(data) {
-        if (data) {
-            //go through each saved field object and render the builder
-            $.each( data, function( k, v ) {
-                //Add the field
-                $(addField(v['type'])).appendTo('#form-fields').hide().slideDown('fast');
-                var $currentField = $('#form-fields .field').last();
-
-                //Add the label
-                $currentField.find('.field-label').val(v['label']);
-
-                //Is it required?
-                if (v['req']) {
-                    requiredField($currentField.find('.toggle-required'));
-                }
-
-                //Any choices?
-                if (v['choices']) {
-                    $.each( v['choices'], function( k, v ) {
-                        //add the choices
-                        $currentField.find('.choices ul').append(addChoice());
-
-                        //Add the label
-                        $currentField.find('.choice-label').last().val(v['label']);
-
-                        //Is it selected?
-                        if (v['sel']) {
-                            selectedChoice($currentField.find('.toggle-selected').last());
-                        }
-                    });
-                }
-
-            });
-
-            $('#form-fields').sortable();
-            $('.choices ul').sortable();
-        }
-    });
 }
